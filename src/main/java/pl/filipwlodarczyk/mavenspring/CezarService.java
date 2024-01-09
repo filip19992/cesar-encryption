@@ -6,11 +6,24 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Scanner;
+
+import static java.lang.Character.isLetter;
 
 @Service
 public class CezarService {
-    public String getSortedWord() {
+    public Response getSortedWord() {
+        var csvText = getTextInCsvFormat();
+
+        var listOfWords = mapToList(csvText);
+        Collections.sort(listOfWords);
+
+        var firstWord = listOfWords.get(0);
+        return new Response(firstWord, encode(firstWord, 13));
+    }
+
+    private StringBuilder getTextInCsvFormat() {
         var stringText = new StringBuilder();
 
         try {
@@ -21,28 +34,33 @@ public class CezarService {
         } catch (FileNotFoundException e) {
             throw new RuntimeException(e);
         }
-
-        var listOfWords = Arrays.asList(stringText.toString().split(";"));
-        Collections.sort(listOfWords);
-
-        return encode(listOfWords.get(0), 13);
+        return stringText;
     }
 
     public String encode(String text, int key) {
-        var encodedText = new StringBuilder();
+        return text.chars()
+                .mapToObj(c -> {
+                    char actualChar = (char) c;
+                    return getEncodedCharacter(key, actualChar);
+                })
+                .collect(StringBuilder::new, StringBuilder::append, StringBuilder::append)
+                .toString();
+    }
 
-        for (int i = 0; i < text.length(); i++) {
-            var actualChar = text.charAt(i);
-
-            if (Character.isLetter(actualChar)) {
-                var encodedChar = (char) ('a' + (actualChar - 'a' + key) % 26);
-                encodedText.append(encodedChar);
-            } else {
-                encodedText.append(actualChar);
-            }
+    private Character getEncodedCharacter(int key, char actualChar) {
+        if (isLetter(actualChar)) {
+            return encodeChar(key, actualChar);
+        } else {
+            return actualChar;
         }
+    }
 
-        return encodedText.toString();
+    private char encodeChar(int key, char actualChar) {
+        return (char) ('a' + (actualChar - 'a' + key) % 26);
+    }
+
+    private List<String> mapToList(StringBuilder stringText) {
+        return Arrays.asList(stringText.toString().split(";"));
     }
 
     private Scanner readFile() throws FileNotFoundException {

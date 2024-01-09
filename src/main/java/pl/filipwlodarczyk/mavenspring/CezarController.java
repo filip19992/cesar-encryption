@@ -14,8 +14,7 @@ public class CezarController {
     }
 
     @GetMapping
-    public String getCezar() {
+    public Response getCezar() {
         return cezarService.getSortedWord();
-
     }
 }
